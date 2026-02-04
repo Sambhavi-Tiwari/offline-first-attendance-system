@@ -1,0 +1,27 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teacher Attendance</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .student { display: flex; justify-content: space-between; margin: 8px 0; }
+        button { margin-left: 5px; }
+        .synced { color: green; }
+        .pending { color: orange; }
+    </style>
+</head>
+<body>
+
+<h2>Class Attendance</h2>
+<p id="status"></p>
+
+<div id="students"></div>
+
+<!-- ✅ ONE correct script tag -->
+ <script src="{% static 'attendance/offline_db.js' %}"></script>
+<script src="{% static 'attendance/attendance.js' %}"></script>
+
+</body>
+</html>
