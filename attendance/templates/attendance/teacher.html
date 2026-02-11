@@ -3,14 +3,12 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="manifest" href="{% static 'attendance/manifest.json' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
     <title>Teacher Attendance</title>
-    <style>
-        body { font-family: Arial; padding: 20px; }
-        .student { display: flex; justify-content: space-between; margin: 8px 0; }
-        button { margin-left: 5px; }
-        .synced { color: green; }
-        .pending { color: orange; }
-    </style>
+    
 </head>
 <body>
 
@@ -22,6 +20,14 @@
 <!-- ✅ ONE correct script tag -->
  <script src="{% static 'attendance/offline_db.js' %}"></script>
 <script src="{% static 'attendance/attendance.js' %}"></script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register("{% static 'attendance/sw.js' %}")
+    .then(() => console.log("Service Worker Registered"));
+}
+</script>
+
 
 </body>
 </html>

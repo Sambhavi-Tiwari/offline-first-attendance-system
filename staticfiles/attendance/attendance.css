@@ -1,0 +1,16 @@
+.badge {
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.synced {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
