@@ -138,4 +138,18 @@ document.addEventListener("DOMContentLoaded", () => {
   setTimeout(syncIfOnline, 1000);
 });
 
+async function addStudents() {
+  const text = document.getElementById("studentList").value;
+  const names = text.split("\n").map(n => n.trim()).filter(n => n);
+
+  await fetch("/api/add-students/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ students: names })
+  });
+
+  alert("Students added successfully");
+  loadStudents();
+}
+
 

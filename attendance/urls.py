@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import get_students, get_teachers, mark_attendance, sync_attendance, teacher_ui, get_today_attendance
+from .views import get_students, get_teachers, mark_attendance, sync_attendance, teacher_ui, get_today_attendance, bulk_add_students
 
 urlpatterns = [
     path('students/', get_students),
@@ -8,6 +8,8 @@ urlpatterns = [
     path('sync/', sync_attendance),
     path('ui/', teacher_ui),
     path('today/', get_today_attendance),
+    path('api/add-students/', bulk_add_students),
+
 
 
 ]

@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import date
-
+from .models import Student
 from .models import Teacher, Student, Attendance
 from .serializers import TeacherSerializer, StudentSerializer, AttendanceSerializer
 from .auth import CsrfExemptSessionAuthentication
@@ -85,6 +85,15 @@ def get_today_attendance(request):
     records = Attendance.objects.filter(date=today)
     serializer = AttendanceSerializer(records, many=True)
     return Response(serializer.data)
+
+@api_view(['POST'])
+def bulk_add_students(request):
+    names = request.data.get("students", [])
+
+    for name in names:
+        Student.objects.create(name=name)
+
+    return Response({"message": "Students added"})
 
 
 
