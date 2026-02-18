@@ -8,7 +8,7 @@ urlpatterns = [
     path('sync/', sync_attendance),
     path('ui/', teacher_ui),
     path('today/', get_today_attendance),
-    path('api/add-students/', bulk_add_students),
+    path('add-students/', bulk_add_students),
 
 
 
