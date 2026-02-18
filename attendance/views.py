@@ -89,11 +89,20 @@ def get_today_attendance(request):
 @api_view(['POST'])
 def bulk_add_students(request):
     names = request.data.get("students", [])
+    class_name = request.data.get("class_name", "Class 1")
+
+    roll = 1
 
     for name in names:
-        Student.objects.create(name=name)
+        Student.objects.create(
+            name=name,
+            roll_number=roll,
+            class_name=class_name
+        )
+        roll += 1
 
     return Response({"message": "Students added"})
+
 
 
 
