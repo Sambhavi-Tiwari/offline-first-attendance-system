@@ -3,14 +3,16 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import date
-from .models import Student
+from django.shortcuts import render
+
 from .models import Teacher, Student, Attendance
 from .serializers import TeacherSerializer, StudentSerializer, AttendanceSerializer
 from .auth import CsrfExemptSessionAuthentication
 
 
-
-
+# ----------------------------
+# GET ALL STUDENTS
+# ----------------------------
 @api_view(['GET'])
 def get_students(request):
     students = Student.objects.all()
@@ -18,12 +20,19 @@ def get_students(request):
     return Response(serializer.data)
 
 
+# ----------------------------
+# GET ALL TEACHERS
+# ----------------------------
 @api_view(['GET'])
 def get_teachers(request):
     teachers = Teacher.objects.all()
     serializer = TeacherSerializer(teachers, many=True)
     return Response(serializer.data)
 
+
+# ----------------------------
+# MARK ATTENDANCE (ONLINE)
+# ----------------------------
 @api_view(['POST'])
 @authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([AllowAny])
@@ -32,6 +41,12 @@ def mark_attendance(request):
     student = request.data.get('student')
     attendance_date = request.data.get('date')
     status_value = request.data.get('status')
+
+    if not all([teacher, student, attendance_date, status_value]):
+        return Response(
+            {"error": "Missing required fields"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     attendance, created = Attendance.objects.update_or_create(
         student_id=student,
@@ -42,19 +57,22 @@ def mark_attendance(request):
             'is_synced': False,
         }
     )
-    
 
     serializer = AttendanceSerializer(attendance)
     return Response(
         serializer.data,
         status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
     )
-    
+
+
+# ----------------------------
+# SYNC OFFLINE ATTENDANCE
+# ----------------------------
 @api_view(['POST'])
 @authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([AllowAny])
 def sync_attendance(request):
-    records = request.data  # list of attendance records
+    records = request.data
     synced = []
 
     for record in records:
@@ -71,14 +89,18 @@ def sync_attendance(request):
 
     serializer = AttendanceSerializer(synced, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
-    print("SYNC RECEIVED:", record)
 
 
-from django.shortcuts import render
-
+# ----------------------------
+# TEACHER UI
+# ----------------------------
 def teacher_ui(request):
     return render(request, 'attendance/teacher.html')
 
+
+# ----------------------------
+# GET TODAY'S ATTENDANCE
+# ----------------------------
 @api_view(['GET'])
 def get_today_attendance(request):
     today = date.today()
@@ -86,24 +108,29 @@ def get_today_attendance(request):
     serializer = AttendanceSerializer(records, many=True)
     return Response(serializer.data)
 
+
+# ----------------------------
+# BULK ADD STUDENTS
+# ----------------------------
 @api_view(['POST'])
 def bulk_add_students(request):
     names = request.data.get("students", [])
-    class_name = request.data.get("class_name", "Class 1")
+    class_name = request.data.get("class_name", "A")
 
-    roll = 1
+    if not names:
+        return Response(
+            {"error": "No student names provided"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-    for name in names:
+    # Continue roll numbers safely
+    last_roll = Student.objects.filter(class_name=class_name).count()
+
+    for index, name in enumerate(names, start=1):
         Student.objects.create(
             name=name,
-            roll_number=roll,
+            roll_number=last_roll + index,
             class_name=class_name
         )
-        roll += 1
 
-    return Response({"message": "Students added"})
-
-
-
-
-
+    return Response({"message": "Students added successfully"})
