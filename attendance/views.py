@@ -134,3 +134,16 @@ def bulk_add_students(request):
         )
 
     return Response({"message": "Students added successfully"})
+
+from django.contrib.auth.models import User
+
+@api_view(['GET'])
+def create_admin(request):
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser(
+            username='admin',
+            email='admin@gmail.com',
+            password='admin123'
+        )
+        return Response({"message": "Admin created"})
+    return Response({"message": "Admin already exists"})
