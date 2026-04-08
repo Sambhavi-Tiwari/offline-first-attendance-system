@@ -49,22 +49,42 @@ document.addEventListener("DOMContentLoaded", () => {
 });*/
 console.log("attendance.js LOADED");
 async function loadStudents() {
-  const res = await fetch("/api/students/");
-  const students = await res.json();
+  const container = document.getElementById("students");
+  container.innerHTML = "";
 
+  try {
+    const res = await fetch("/api/students/");
+    const students = await res.json();
+
+    // ✅ Save to localStorage for offline use
+    localStorage.setItem("students", JSON.stringify(students));
+
+    renderStudents(students);
+
+  } catch (error) {
+    console.log("Offline: loading from localStorage");
+
+    const students = JSON.parse(localStorage.getItem("students")) || [];
+    renderStudents(students);
+  }
+}
+
+function renderStudents(students) {
   const container = document.getElementById("students");
   container.innerHTML = "";
 
   students.forEach(s => {
     const div = document.createElement("div");
     div.className = "student";
+
     div.innerHTML = `
-  <span>${s.name} <small id="status-${s.id}"></small></span>
-  <span>
-    <button onclick="markAttendance(${s.id}, 'P')">P</button>
-    <button onclick="markAttendance(${s.id}, 'A')">A</button>
-  </span>
-`;
+      <span>${s.name} <small id="status-${s.id}"></small></span>
+      <span>
+        <button onclick="markAttendance(${s.id}, 'P')">P</button>
+        <button onclick="markAttendance(${s.id}, 'A')">A</button>
+      </span>
+    `;
+
     container.appendChild(div);
   });
 }
