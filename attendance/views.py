@@ -114,22 +114,19 @@ def get_today_attendance(request):
 # ----------------------------
 @api_view(['POST'])
 def bulk_add_students(request):
-    names = request.data.get("students", [])
+    students = request.data.get("students", [])
     class_name = request.data.get("class_name", "A")
 
-    if not names:
+    if not students:
         return Response(
-            {"error": "No student names provided"},
+            {"error": "No student data provided"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Continue roll numbers safely
-    last_roll = Student.objects.filter(class_name=class_name).count()
-
-    for index, name in enumerate(names, start=1):
+    for student in students:
         Student.objects.create(
-            name=name,
-            roll_number=last_roll + index,
+            name=student.get("name"),
+            roll_number=student.get("roll"),
             class_name=class_name
         )
 
