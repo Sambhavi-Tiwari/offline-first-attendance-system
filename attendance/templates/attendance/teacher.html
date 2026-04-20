@@ -5,38 +5,40 @@
 <head>
     <link rel="manifest" href="{% static 'attendance/manifest.json' %}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
     <title>Teacher Attendance</title>
-    
 </head>
+
 <body>
 
 <h2>Class Attendance</h2>
 <p id="status"></p>
+
 <h3>Add Students (First Time Setup)</h3>
 <textarea id="studentList" placeholder="Enter one name per line"></textarea>
 <br>
 <button onclick="addStudents()">Save Students</button>
+
 <hr>
+
 <h3>Select Teacher</h3>
 <select id="teacherSelect"></select>
 <button onclick="setTeacher()">Set Teacher</button>
+
 <hr>
 
 <div id="students"></div>
 
-<!-- ✅ ONE correct script tag -->
- <script src="{% static 'attendance/offline_db.js' %}"></script>
+<!-- ✅ LOAD SCRIPTS IN CORRECT ORDER -->
 <script src="{% static 'attendance/attendance.js' %}"></script>
+<script src="{% static 'attendance/offline_db.js' %}"></script>
 
+<!-- ✅ SERVICE WORKER -->
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register("{% static 'attendance/sw.js' %}")
     .then(() => console.log("Service Worker Registered"));
 }
 </script>
-
 
 </body>
 </html>
