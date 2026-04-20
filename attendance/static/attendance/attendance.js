@@ -93,7 +93,7 @@ function renderStudents(students) {
 function markAttendance(studentId, status) {
   const record = {
     student: studentId,
-    teacher: 1,
+    teacher: localStorage.getItem("teacher_id") || 1,
     date: new Date().toLocaleDateString("en-CA"),
     status: status,
     synced: false,
@@ -172,4 +172,22 @@ async function addStudents() {
   loadStudents();
 }
 
+async function loadTeachers() {
+  const res = await fetch("/api/teachers/");
+  const teachers = await res.json();
 
+  const select = document.getElementById("teacherSelect");
+  select.innerHTML = "";
+
+  teachers.forEach(t => {
+    const option = document.createElement("option");
+    option.value = t.id;
+    option.textContent = t.name;
+    select.appendChild(option);
+  });
+}
+function setTeacher() {
+  const teacherId = document.getElementById("teacherSelect").value;
+  localStorage.setItem("teacher_id", teacherId);
+  alert("Teacher selected!");
+}
