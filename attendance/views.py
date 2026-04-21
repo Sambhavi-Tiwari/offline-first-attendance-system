@@ -35,7 +35,7 @@ def get_teachers(request):
 # ----------------------------
 @api_view(['POST'])
 @authentication_classes([CsrfExemptSessionAuthentication])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def mark_attendance(request):
     teacher = request.data.get('teacher')
     student = request.data.get('student')
@@ -70,7 +70,7 @@ def mark_attendance(request):
 # ----------------------------
 @api_view(['POST'])
 @authentication_classes([CsrfExemptSessionAuthentication])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def sync_attendance(request):
     records = request.data
     synced = []
@@ -144,3 +144,19 @@ def create_admin(request):
         )
         return Response({"message": "Admin created"})
     return Response({"message": "Admin already exists"})
+
+from django.contrib.auth import authenticate, login
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_user(request):
+    username = request.data.get("username")
+    password = request.data.get("password")
+
+    user = authenticate(username=username, password=password)
+
+    if user:
+        login(request, user)
+        return Response({"message": "Login successful"})
+    return Response({"error": "Invalid credentials"}, status=400)
