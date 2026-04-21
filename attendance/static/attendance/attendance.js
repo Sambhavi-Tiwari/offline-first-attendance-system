@@ -1,53 +1,8 @@
-/*async function loadStudents() {
-  try {
-    const res = await fetch("/api/students/");
-    if (!res.ok) {
-      console.error("Failed to load students", res.status);
-      return;
-    }
-
-    const students = await res.json();
-    const container = document.getElementById("students");
-    container.innerHTML = "";
-
-    students.forEach(s => {
-      const div = document.createElement("div");
-      div.className = "student";
-      div.innerHTML = `
-        <span>${s.name}</span>
-        <span>
-          <button onclick="markAttendance(${s.id}, 'P')">P</button>
-          <button onclick="markAttendance(${s.id}, 'A')">A</button>
-        </span>
-      `;
-      container.appendChild(div);
-    });
-  } catch (err) {
-    console.error("Student load error", err);
-  }
-}
-function markAttendance(studentId, status) {
-  const record = {
-    student: studentId,
-    teacher: 1,
-    date: new Date().toLocaleDateString("en-CA"),
-    status: status,
-    synced: false,
-    timestamp: Date.now()
-  };
-
-  /*if (!window.db) {
-    console.warn("DB not ready yet");
-    return;
-  }*/
-
-  /*saveOffline(record);
-  updateUI(studentId, "pending");
-}
-document.addEventListener("DOMContentLoaded", () => {
-  loadStudents();
-});*/
 console.log("attendance.js LOADED");
+
+// ==========================
+// LOAD STUDENTS (ONLINE + OFFLINE)
+// ==========================
 async function loadStudents() {
   const container = document.getElementById("students");
   container.innerHTML = "";
@@ -56,7 +11,7 @@ async function loadStudents() {
     const res = await fetch("/api/students/");
     const students = await res.json();
 
-    // ✅ Save to localStorage for offline use
+    // Save for offline use
     localStorage.setItem("students", JSON.stringify(students));
 
     renderStudents(students);
@@ -69,6 +24,9 @@ async function loadStudents() {
   }
 }
 
+// ==========================
+// RENDER STUDENTS UI
+// ==========================
 function renderStudents(students) {
   const container = document.getElementById("students");
   container.innerHTML = "";
@@ -89,11 +47,20 @@ function renderStudents(students) {
   });
 }
 
-
+// ==========================
+// MARK ATTENDANCE (OFFLINE FIRST)
+// ==========================
 function markAttendance(studentId, status) {
+  const teacherId = localStorage.getItem("teacher_id");
+
+  if (!teacherId) {
+    alert("⚠️ Please select a teacher first!");
+    return;
+  }
+
   const record = {
     student: studentId,
-    teacher: localStorage.getItem("teacher_id") || 1,
+    teacher: teacherId,
     date: new Date().toLocaleDateString("en-CA"),
     status: status,
     synced: false,
@@ -105,19 +72,26 @@ function markAttendance(studentId, status) {
 
   console.log("Saved offline:", record);
 }
+
+// ==========================
+// UPDATE UI STATUS
+// ==========================
 function updateUI(studentId, state) {
   const badge = document.getElementById(`status-${studentId}`);
   if (!badge) return;
 
   if (state === "pending") {
     badge.textContent = "Pending";
-    badge.className = "pending";
+    badge.style.color = "orange";
   } else if (state === "synced") {
     badge.textContent = "Synced";
-    badge.className = "synced";
+    badge.style.color = "green";
   }
 }
 
+// ==========================
+// SYNC WHEN ONLINE
+// ==========================
 async function syncIfOnline() {
   if (!navigator.onLine || !window.db) return;
 
@@ -141,26 +115,66 @@ async function syncIfOnline() {
       if (res.ok) {
         clearSynced(records.map(r => r.id));
         records.forEach(r => updateUI(r.student, "synced"));
-        console.log("SYNCED TO SERVER");
+        console.log("✅ SYNCED TO SERVER");
+      } else {
+        console.log("❌ Sync failed:", res.status);
       }
+
     } catch (e) {
-      console.log("Still offline");
+      console.log("⚠️ Still offline");
     }
   });
 }
 
+// ==========================
+// LOAD TEACHERS
+// ==========================
+async function loadTeachers() {
+  try {
+    const res = await fetch("/api/teachers/");
+    const teachers = await res.json();
 
-window.addEventListener("online", syncIfOnline);
-setInterval(syncIfOnline, 10000);
+    const select = document.getElementById("teacherSelect");
+    select.innerHTML = "";
 
-loadStudents();
-document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(syncIfOnline, 1000);
-});
+    teachers.forEach(t => {
+      const option = document.createElement("option");
+      option.value = t.id;
+      option.textContent = t.name;
+      select.appendChild(option);
+    });
 
+  } catch (err) {
+    console.log("Failed to load teachers");
+  }
+}
+
+// ==========================
+// SET TEACHER
+// ==========================
+function setTeacher() {
+  const teacherId = document.getElementById("teacherSelect").value;
+
+  if (!teacherId) {
+    alert("Select a teacher!");
+    return;
+  }
+
+  localStorage.setItem("teacher_id", teacherId);
+  alert("✅ Teacher selected!");
+}
+
+// ==========================
+// ADD STUDENTS
+// ==========================
 async function addStudents() {
   const text = document.getElementById("studentList").value;
   const names = text.split("\n").map(n => n.trim()).filter(n => n);
+
+  if (names.length === 0) {
+    alert("Enter at least one student");
+    return;
+  }
 
   await fetch("/api/add-students/", {
     method: "POST",
@@ -172,22 +186,14 @@ async function addStudents() {
   loadStudents();
 }
 
-async function loadTeachers() {
-  const res = await fetch("/api/teachers/");
-  const teachers = await res.json();
+// ==========================
+// EVENTS
+// ==========================
+window.addEventListener("online", syncIfOnline);
+setInterval(syncIfOnline, 10000);
 
-  const select = document.getElementById("teacherSelect");
-  select.innerHTML = "";
-
-  teachers.forEach(t => {
-    const option = document.createElement("option");
-    option.value = t.id;
-    option.textContent = t.name;
-    select.appendChild(option);
-  });
-}
-function setTeacher() {
-  const teacherId = document.getElementById("teacherSelect").value;
-  localStorage.setItem("teacher_id", teacherId);
-  alert("Teacher selected!");
-}
+document.addEventListener("DOMContentLoaded", () => {
+  loadStudents();
+  loadTeachers();   // ⭐ FIXED
+  setTimeout(syncIfOnline, 1000);
+});
