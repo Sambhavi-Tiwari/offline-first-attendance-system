@@ -56,7 +56,7 @@ function setTeacher() {
 function markAttendance(studentId, status) {
   const record = {
     student: studentId,
-    teacher: localStorage.getItem("teacher_id") || 1,
+    teacher: localStorage.getItem("user_id") || 1,
     date: new Date().toLocaleDateString("en-CA"),
     status: status,
     synced: false,
@@ -79,17 +79,23 @@ async function login() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
 
-  const res = await fetch("/api/login/", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ username, password })
-  });
+  try {
+    const res = await fetch("/api/login/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
 
-  if (res.ok) {
-    alert("Login successful");
-    localStorage.setItem("logged_in", "true");
-  } else {
-    alert("Invalid credentials");
+    const data = await res.json();
+
+    if (res.ok) {
+      localStorage.setItem("user_id", data.user_id);
+      alert("Login successful");
+    } else {
+      alert(data.error);
+    }
+  } catch (e) {
+    alert("Login failed");
   }
 }
 async function syncIfOnline() {
