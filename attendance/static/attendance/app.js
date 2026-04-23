@@ -54,31 +54,19 @@ function setTeacher() {
 
 // ---------- ATTENDANCE ----------
 function markAttendance(studentId, status) {
-  if (!localStorage.getItem("logged_in")) {
-  alert("Please login first");
-  return;
-}
-  const teacher = localStorage.getItem("teacher_id");
-
-  if (!teacher) {
-    alert("Select teacher first!");
-    return;
-  }
-
   const record = {
     student: studentId,
-    teacher: teacher,
-    date: new Date().toISOString().split("T")[0],
-    status: status
+    teacher: localStorage.getItem("teacher_id") || 1,
+    date: new Date().toLocaleDateString("en-CA"),
+    status: status,
+    synced: false,
+    timestamp: Date.now()
   };
 
-  fetch("/api/attendance/", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(record)
-  });
+  saveOffline(record);   // ✅ save locally
+  updateUI(studentId, "pending");  // ✅ show pending
 
-  document.getElementById(`status-${studentId}`).innerText = "Saved";
+  console.log("Saved offline:", record);
 }
 
 // ---------- INIT ----------
@@ -102,5 +90,49 @@ async function login() {
     localStorage.setItem("logged_in", "true");
   } else {
     alert("Invalid credentials");
+  }
+}
+async function syncIfOnline() {
+  if (!navigator.onLine || !window.db) return;
+
+  getPendingAttendance(async (records) => {
+    if (!records || records.length === 0) return;
+
+    const payload = records.map(r => ({
+      student: r.student,
+      teacher: r.teacher,
+      date: r.date,
+      status: r.status
+    }));
+
+    try {
+      const res = await fetch("/api/sync/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        clearSynced(records.map(r => r.id));
+        records.forEach(r => updateUI(r.student, "synced"));
+        console.log("SYNCED TO SERVER");
+      }
+    } catch (e) {
+      console.log("Still offline");
+    }
+  });
+}
+window.addEventListener("online", syncIfOnline);
+setInterval(syncIfOnline, 10000);
+function updateUI(studentId, state) {
+  const badge = document.getElementById(`status-${studentId}`);
+  if (!badge) return;
+
+  if (state === "pending") {
+    badge.textContent = "Pending";
+    badge.style.color = "orange";
+  } else if (state === "synced") {
+    badge.textContent = "Synced";
+    badge.style.color = "green";
   }
 }
