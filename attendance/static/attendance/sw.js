@@ -1,25 +1,32 @@
-const CACHE_NAME = "attendance-cache-v1";
+const CACHE_NAME = "attendance-v4";
 
 const urlsToCache = [
   "/api/ui/",
-  "/static/attendance/attendance.js",
+  "/static/attendance/app.js",
   "/static/attendance/offline_db.js",
-  "/static/attendance/attendance.css"
+  "/static/attendance/manifest.json"
 ];
 
-// Install
-self.addEventListener("install", event => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(urlsToCache);
+    })
   );
 });
 
-// Fetch
-self.addEventListener("fetch", event => {
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener("fetch", (event) => {
   event.respondWith(
-    fetch(event.request).catch(() =>
-      caches.match(event.request)
-    )
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request).catch(() => {
+        if (event.request.mode === "navigate") {
+          return caches.match("/api/ui/");
+        }
+      });
+    })
   );
 });

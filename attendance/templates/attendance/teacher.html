@@ -33,9 +33,9 @@
 <div id="students"></div>
 
 <!-- ✅ LOAD SCRIPTS IN CORRECT ORDER -->
-<script src="{% static 'attendance/app.js' %}?v=2"></script>
-<script src="{% static 'attendance/offline_db.js' %}?v=2"></script>
-<!-- ✅ SERVICE WORKER -->
+<script src="{% static 'attendance/offline_db.js' %}"></script>
+<script src="{% static 'attendance/app.js' %}?v=10"></script>
+
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register("{% static 'attendance/sw.js' %}")
